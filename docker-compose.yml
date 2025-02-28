@@ -1,0 +1,90 @@
+services:
+  # Container for postgresqlDB service
+  postgres:
+    container_name: ms_pg_sql
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PGDATA: /var/lib/postgresql/data
+    # Persistent data storage with the postgres volume
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      # Exposing container ports "External Port: Container Port"
+      - 5432:5432
+    # Custom network
+    networks:
+      - microservices-net
+    # If the container is stopped, I want it to automatically restart
+    restart: unless-stopped
+
+
+  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+  pgadmin:
+    container_name: ms_pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - 5050:80
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+
+
+  # MongoDB service container
+  mongodb:
+    container_name: ms_mongo_db
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=eugene
+      - MONGO_INITDB_ROOT_PASSWORD=eugene
+
+
+  # MongoExpress service container
+  mongo-express:
+    container_name: ms_mongo_express
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+
+
+  # mail-dev service container
+  mail-dev:
+    container_name: ms_mail_dev
+    image: maildev/maildev
+    ports:
+      # Web interface on port 1025
+      - 1080:1080
+      # SMTP server on port 1025
+      - 1025:1025
+
+
+# Creates a bridge network named "microservices-net" for container communication
+networks:
+  microservices-net:
+    driver: bridge
+
+# Three persistent volumes are defined:
+# postgres: For PostgresSQL data
+# pgadmin: For pgAdmin configurations
+# mongo: For MongoDB data
+volumes:
+  postgres:
+  pgadmin:
+  mongo:
