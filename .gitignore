@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+.mvn/
+target/
+.gitattributes
+.gitignore
+.classpath
+.project
