@@ -1,6 +1,5 @@
 package com.eugene.customer_service.controller;
 
-import com.eugene.customer_service.customer.Customer;
 import com.eugene.customer_service.dto.CustomerDTO;
 import com.eugene.customer_service.service.CustomerService;
 import jakarta.validation.Valid;
@@ -40,5 +39,17 @@ public class CustomerController {
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable String id){
         return ResponseEntity.ok(customerService.getCustomerById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable String id){
+
+        customerService.deleteCustomer(id);
+
+        /*
+        * Indicates that the delete operation was successful but there's no content to return in the response body.
+        * Returns the status code HTTP 204 (No Content) status code.
+        * */
+        return ResponseEntity.noContent().build();
     }
 }
