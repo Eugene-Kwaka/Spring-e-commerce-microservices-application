@@ -25,9 +25,9 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.createCustomer(customerDTO));
     }
 
-    @PutMapping
-    public ResponseEntity<CustomerDTO> updateCustomer(@RequestBody @Valid CustomerDTO customerDTO){
-        CustomerDTO updatedCustomer = customerService.updateCustomer(customerDTO);
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomerDTO> updateCustomer(@PathVariable("id") String id, @RequestBody @Valid CustomerDTO customerDTO){
+        CustomerDTO updatedCustomer = customerService.updateCustomer(id, customerDTO);
         return ResponseEntity.ok(updatedCustomer);
     }
 
