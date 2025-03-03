@@ -35,9 +35,9 @@ public class CustomerService {
         return newCustomer.getId();
     }
 
-    public CustomerDTO updateCustomer(CustomerDTO customerDTO){
+    public CustomerDTO updateCustomer(String id, CustomerDTO customerDTO){
         // Looking for an existing customer using the findById() method and if not found, return the CustomerNotFoundException
-        Customer customer = customerRepository.findById(customerDTO.id())
+        Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Cannot update customer as no customer found with the provided ID"));
 
         if (customerDTO.firstName() != null){
