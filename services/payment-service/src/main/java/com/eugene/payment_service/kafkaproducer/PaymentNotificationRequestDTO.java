@@ -1,22 +1,27 @@
 package com.eugene.payment_service.kafkaproducer;
 
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
+import com.eugene.payment_service.entity.PaymentMethod;
 
-public class NotificationRequestDTO {
+import java.math.BigDecimal;
 
-    public void sendOrderConfirmation(NotfificationRequestDTO notificationRequestDTO) {
-        log.info("Sending order confirmation: {}", orderConfirmationDTO);
+public record PaymentNotificationRequestDTO(
 
-        /**
-         * using MessageBuilder class to create Message objects that contains the OrderConfirmationDTO payload and a header specifying the Kafka topic to which the message should be sent.*/
-        Message<OrderConfirmationDTO> message = MessageBuilder
-                .withPayload(orderConfirmationDTO)
-                // This sets a header for the message, specifying the Kafka topic ("order-topic") where the message should be sent.
-                .setHeader(KafkaHeaders.TOPIC, "order-topic")
-                .build();
+        String orderReference,
 
-        kafkaTemplate.send(message);
-    }
+        BigDecimal amount,
+
+        PaymentMethod paymentMethod,
+
+        String customerFirstName,
+
+        String customerLastName,
+
+        String customerEmail
+) {
+
+
+
+
+
+
 }

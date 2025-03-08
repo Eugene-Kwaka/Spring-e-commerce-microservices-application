@@ -20,7 +20,8 @@ public class ProductMapper {
                 product.getDescription(),
                 product.getAvailableQuantity(),
                 product.getPrice(),
-                product.getCategory());
+                product.getCategory()
+        );
 
     }
 
