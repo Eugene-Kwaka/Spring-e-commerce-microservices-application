@@ -38,4 +38,4 @@ application:
     # We are using the port 8222 for the API Gateway that will route and filter all requests and forward them to the correct microservice
     customer-serviceURL: http://localhost:8222/api/v1/customers
     product-serviceURL: http://localhost:8222/api/v1/products
-    payment-serviceURL: http://localhost:8222/api/v1/paymenyd
+    payment-serviceURL: http://localhost:8222/api/v1/payments
