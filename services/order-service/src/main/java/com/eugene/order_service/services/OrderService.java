@@ -1,6 +1,7 @@
 package com.eugene.order_service.services;
 
 import com.eugene.order_service.clients.CustomerClient;
+import com.eugene.order_service.clients.PaymentClient;
 import com.eugene.order_service.clients.ProductClient;
 import com.eugene.order_service.dto.*;
 import com.eugene.order_service.entity.Order;
@@ -24,11 +25,15 @@ public class OrderService {
 
     private final ProductClient productClient;
 
+    private final PaymentClient paymentClient;
+
     private final OrderMapper orderMapper;
 
     private final OrderLineService orderLineService;
 
     private final OrderProducer orderProducer;
+
+
 
 
     public Integer createOrder(OrderDTO orderDTO){
@@ -64,6 +69,22 @@ public class OrderService {
         }
 
         // start payment process
+        /**
+         * The PaymentRequestDTO constructor is taking the following arguments from orderDTO, order, and Customer objects:
+         *  - orderDTO.amount() - This retrieves the amount from the OrderDTO object.
+         *  - orderDTO.paymentMethod() - This retrieves the paymentMethod from the OrderDTO object.
+         *  - order.getId() - This retrieves the id from the Order entity.
+         *  - order.getReference() - This retrieves the reference from the Order entity.
+         *  - customer - This is the Customer object retrieved from the CustomerClient.*/
+        PaymentRequestDTO paymentRequestDTO = new PaymentRequestDTO(
+                orderDTO.amount(),
+                orderDTO.paymentMethod(),
+                order.getId(),
+                order.getReference(),
+                customer
+        );
+
+        paymentClient.requestOrderPayment(paymentRequestDTO);
 
         // Send the order confirmation to the notification-service with Kafka
         orderProducer.sendOrderConfirmation(
