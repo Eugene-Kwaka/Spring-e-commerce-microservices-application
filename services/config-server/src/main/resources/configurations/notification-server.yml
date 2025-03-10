@@ -1,0 +1,42 @@
+
+server:
+  port: 8040
+
+spring:
+  data:
+    mongodb:
+      username: eugene
+      password: eugene
+      host: localhost
+      port: 27017
+      database: customer-service
+      authentication-database: admin
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: paymentGroup, orderGroup
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: '*'
+        # use the path from the order-service and payment-service
+        spring.json.type.mapping: orderConfirmationDTO:com.eugene.order_service.kafka.OrderConfirmationDTO,paymentNotificationRequestDTO:com.eugene.payment_service.kafkaproducer.PaymentNotificationRequestDTO
+
+
+mail:
+  host: localhost
+  port: 1025
+  username: kwakaeugene@gmail.com
+  password: eugene
+  protocol:
+    mail:
+      smtp:
+        trust: "*"
+      auth: true
+      starttls:
+        enable: true
+      connectiontimeout: 5000
+      timeout: 3000
+      writetimeout: 5000

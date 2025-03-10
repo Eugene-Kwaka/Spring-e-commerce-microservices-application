@@ -1,4 +1,19 @@
 package com.eugene.notificationservice.kafka.payment;
 
-public record PaymentConfirmationDTO() {
+import java.math.BigDecimal;
+
+public record PaymentConfirmationDTO(
+
+        String orderReference,
+
+        BigDecimal amount,
+
+        PaymentMethod paymentMethod,
+
+        String customerFirstName,
+
+        String customerLastName,
+
+        String customerEmail
+) {
 }

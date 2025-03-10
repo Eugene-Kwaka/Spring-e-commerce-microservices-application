@@ -1,6 +1,6 @@
 package com.eugene.notificationservice.kafka.order;
 
-public record Customer(
+public record CustomerDTO(
         String id,
 
         String firstName,

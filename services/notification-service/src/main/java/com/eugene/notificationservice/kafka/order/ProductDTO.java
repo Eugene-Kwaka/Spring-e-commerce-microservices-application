@@ -2,7 +2,7 @@ package com.eugene.notificationservice.kafka.order;
 
 import java.math.BigDecimal;
 
-public record Product(
+public record ProductDTO(
 
         Integer productId,
 
