@@ -38,6 +38,16 @@ services:
 
 
 
+  # Zipkin service container for distributed tracing.
+  zipkin:
+    container_name: ms_zipkin
+    image: openzipkin/zipkin
+    ports:
+      - 9411:9411
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
   # KAFKA CONFIG USING ZOOKEEPER
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -51,6 +61,7 @@ services:
       - 22181:2181
     networks:
       - microservices-net
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -69,7 +80,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
     networks:
       - microservices-net
-
+    restart: unless-stopped
 
 
   # MongoDB service container
@@ -83,20 +94,23 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=eugene
       - MONGO_INITDB_ROOT_PASSWORD=eugene
-
+    networks:
+      - microservices-net
+    restart: unless-stopped
 
   # MongoExpress service container
   mongo-express:
     container_name: ms_mongo_express
     image: mongo-express
-    restart: unless-stopped
     ports:
       - 8081:8081
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
       - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
       - ME_CONFIG_MONGODB_SERVER=mongodb
-
+    networks:
+      - microservices-net
+    restart: unless-stopped
 
   # mail-dev service container
   mail-dev:
@@ -107,8 +121,24 @@ services:
       - 1080:1080
       # SMTP server on port 1025
       - 1025:1025
+    networks:
+      - microservices-net
+    restart: unless-stopped
 
 
+  keycloak:
+    container_name: keycloak-ms
+    image: quay.io/keycloak/keycloak:24.0.2
+    ports:
+      - 9098:8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    networks:
+      - microservices-net
+    command:
+      - "start-dev"
+    restart: unless-stopped
 
 
 
