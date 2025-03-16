@@ -13,8 +13,8 @@ public record OrderConfirmationDTO(
 
         PaymentMethod paymentMethod,
 
-        CustomerDTO customerDTO,
+        CustomerDTO customer,
 
-        List<ProductDTO> productsDTO
+        List<ProductPurchaseResponseDTO> purchasedProductsResponseDTO
 ) {
 }

@@ -1,6 +1,6 @@
 package com.eugene.notificationservice.email;
 
-import com.eugene.notificationservice.kafka.order.ProductDTO;
+import com.eugene.notificationservice.kafka.order.ProductPurchaseResponseDTO;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -13,15 +13,19 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class EmailService {
 
+    /**
+     * Fixed the error by adding the mailSender bean to the EmailConfig class.
+     */
     private final JavaMailSender mailSender;
 
     /**
@@ -41,7 +45,7 @@ public class EmailService {
         MimeMessageHelper messageHelper = new MimeMessageHelper(
                 mimeMessage,
                 MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                "UTF-8");
+                StandardCharsets.UTF_8.name());
 
         messageHelper.setFrom("kwakaeugene@gmail.com");
 
@@ -67,14 +71,14 @@ public class EmailService {
 
 
         } catch (MessagingException e) {
-            log.warn("Cannot send mail to {}", toEmail);
+            log.warn("WARNING!! Cannot send mail to {}", toEmail);
             throw new RuntimeException(e);
         }
 
     }
 
     @Async
-    public void sendOrderSuccessEmail(String toEmail, String customerName, BigDecimal amount, String orderReference, List<ProductDTO> productsDTO) throws MessagingException {
+    public void sendOrderSuccessEmail(String toEmail, String customerName, BigDecimal amount, String orderReference, List<ProductPurchaseResponseDTO> purchasedProductsResponseDTO) throws MessagingException {
 
         // I need to create object of type MimeMessage
         MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -92,7 +96,7 @@ public class EmailService {
         variables.put("customerName", customerName);
         variables.put("totalAmount", amount);
         variables.put("orderReference", orderReference);
-        variables.put("Products", productsDTO);
+        variables.put("products", purchasedProductsResponseDTO);
 
         Context context = new Context();
         context.setVariables(variables);
@@ -112,9 +116,6 @@ public class EmailService {
             log.warn("Cannot send mail to {}", toEmail);
             throw new RuntimeException(e);
         }
-
-
-
 
     }
 }

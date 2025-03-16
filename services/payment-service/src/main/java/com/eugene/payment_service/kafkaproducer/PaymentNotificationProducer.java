@@ -14,15 +14,18 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class PaymentNotificationProducer {
 
-    private final KafkaTemplate<String, PaymentNotificationRequestDTO> kafkaTemplate;
+    private final KafkaTemplate<String, PaymentConfirmationDTO> kafkaTemplate;
 
-    public void sendPaymentNotification(PaymentNotificationRequestDTO paymentNotificationRequestDTO){
+    public void sendPaymentNotification(PaymentConfirmationDTO paymentConfirmationDTO){
 
-        log.info("Sending payment notification confirmation with body <{}>", paymentNotificationRequestDTO);
+        // The <{}> will include the output from the serialization of the paymentConfirmationDTO object.
+        log.info("Sending payment notification confirmation with body <{}>", paymentConfirmationDTO);
 
-        Message<PaymentNotificationRequestDTO> message = MessageBuilder
-                .withPayload(paymentNotificationRequestDTO)
-                .setHeader(KafkaHeaders.TOPIC,  "payment-notification-topic")
+        Message<PaymentConfirmationDTO> message = MessageBuilder
+                .withPayload(paymentConfirmationDTO)
+                .setHeader(KafkaHeaders.TOPIC,  "payment-topic")
                 .build();
+
+        kafkaTemplate.send(message);
     }
 }

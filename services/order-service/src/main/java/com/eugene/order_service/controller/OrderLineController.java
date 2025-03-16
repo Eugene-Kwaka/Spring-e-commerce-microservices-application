@@ -14,20 +14,16 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/orderLines")
-
+@RequestMapping("/api/v1/order-lines")
 public class OrderLineController {
 
     private final OrderLineService orderLineService;
 
-    @GetMapping("/order/{id}")
-    public ResponseEntity<OrderLineResponseDTO> findByOrderId(@PathVariable Integer id) {
-        return ResponseEntity.ok(orderLineService.findByOrderId(id));
-    }
 
-    @GetMapping("/order/{id}")
-    public ResponseEntity<List<OrderLineResponseDTO>> findAllByOrderId(@PathVariable Integer id) {
-        return ResponseEntity.ok(orderLineService.findAllByOrderId(id));
+    // Return all orderLines for a specific order by proving the orderId
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<OrderLineResponseDTO>> findByOrderId(@PathVariable("orderId") Integer orderId) {
+        return ResponseEntity.ok(orderLineService.findAllByOrderId(orderId));
     }
 
 

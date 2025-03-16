@@ -20,18 +20,24 @@ public class OrderController {
 
    @PostMapping
     public ResponseEntity<Integer> createOrder(@RequestBody @Valid OrderDTO orderDTO){
-        return ResponseEntity.ok(orderService.createOrder(orderDTO));
+        return ResponseEntity.ok(this.orderService.createOrder(orderDTO));
     }
 
     @GetMapping
     public ResponseEntity<List<OrderResponseDTO>> findAllOrders(){
-        return ResponseEntity.ok(orderService.findAllOrders());
+        return ResponseEntity.ok(this.orderService.findAllOrders());
     }
 
-    @GetMapping("/order/{id}")
-    public ResponseEntity<OrderResponseDTO> findOrderById(@PathVariable("id") Integer id){
-        return ResponseEntity.ok(orderService.findOrderById(id));
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponseDTO> findOrderById(@PathVariable("orderId") Integer id){
+        return ResponseEntity.ok(this.orderService.findOrderById(id));
     }
 
+
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable("orderId") Integer id){
+        this.orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }

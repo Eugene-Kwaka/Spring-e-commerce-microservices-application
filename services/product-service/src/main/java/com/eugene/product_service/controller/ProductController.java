@@ -3,6 +3,7 @@ package com.eugene.product_service.controller;
 import com.eugene.product_service.dto.ProductDTO;
 import com.eugene.product_service.dto.ProductPurchaseDTO;
 import com.eugene.product_service.dto.ProductPurchaseResponseDTO;
+import com.eugene.product_service.dto.ProductResponseDTO;
 import com.eugene.product_service.entity.Product;
 import com.eugene.product_service.service.ProductService;
 import jakarta.validation.Valid;
@@ -22,7 +23,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<ProductDTO> createProduct(@RequestBody @Valid ProductDTO productDTO) {
+    public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody @Valid ProductDTO productDTO) {
         return ResponseEntity.ok(productService.createProduct(productDTO));
     }
 
@@ -32,12 +33,12 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> findProductById(@PathVariable("id") Integer id) {
+    public ResponseEntity<ProductResponseDTO> findProductById(@PathVariable("id") Integer id) {
         return ResponseEntity.ok(productService.findProductById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> findAllProducts() {
+    public ResponseEntity<List<ProductResponseDTO>> findAllProducts() {
         return ResponseEntity.ok(productService.findAllProducts());
     }
 }

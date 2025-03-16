@@ -1,0 +1,17 @@
+# This file is created so that all the YAML files in the whole project inherit from this.
+# This removes the need to repeat the Eureka configurations in each services' individual configuration files.
+# This file configures the eureka hostname and URL.
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+
+# This configuration prevents system properties from automatically overriding service-specific configurations. We do not want that to happen.
+# This ensures that each service's specific configurations (defined in their respective YAML files) are respected and not unexpectedly overridden
+spring:
+  cloud:
+    config:
+      override.system-properties: false

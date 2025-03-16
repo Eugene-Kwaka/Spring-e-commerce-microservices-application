@@ -2,7 +2,6 @@ package com.eugene.notificationservice.kafka;
 
 import com.eugene.notificationservice.email.EmailService;
 import com.eugene.notificationservice.entity.Notification;
-import com.eugene.notificationservice.kafka.order.CustomerDTO;
 import com.eugene.notificationservice.kafka.order.OrderConfirmationDTO;
 import com.eugene.notificationservice.repository.NotificationRepository;
 import jakarta.mail.MessagingException;
@@ -51,14 +50,14 @@ public class NotificationConsumer {
 
         // Send Email
         // Concatenate the customer's first and last name to a single customerName String variable.
-        String customerName = orderConfirmationDTO.customerDTO().firstName() + " " + orderConfirmationDTO.customerDTO().lastName();
+        String customerName = orderConfirmationDTO.customer().firstName() + " " + orderConfirmationDTO.customer().lastName();
 
         emailService.sendOrderSuccessEmail(
-                orderConfirmationDTO.customerDTO().email(),
+                orderConfirmationDTO.customer().email(),
                 customerName,
                 orderConfirmationDTO.totalAmount(),
                 orderConfirmationDTO.orderReference(),
-                orderConfirmationDTO.productsDTO()
+                orderConfirmationDTO.purchasedProductsResponseDTO()
         );
     }
 
@@ -69,9 +68,9 @@ public class NotificationConsumer {
      * I will copy the details of the payment confirmation from the payment-service/PaymentNotificationRequestDTO.
      * Add a MessagingException to handle any errors that may occur when sending the email.
      * */
-    @KafkaListener(topics = "payment-notification-topic")
+    @KafkaListener(topics = "payment-topic")
     public void consumePaymentSuccessNotification(PaymentConfirmationDTO paymentConfirmationDTO) throws MessagingException {
-        log.info("Consuming message from payment-notification-topic: {}", paymentConfirmationDTO);
+        log.info("Consuming message from payment-topic: {}", paymentConfirmationDTO);
 
         notificationRepository.save(
                 Notification.builder()
@@ -83,6 +82,7 @@ public class NotificationConsumer {
 
         // Send Email
         String customerName = paymentConfirmationDTO.customerFirstName() + " " + paymentConfirmationDTO.customerLastName();
+
         emailService.sendPaymentSuccessEmail(
                 paymentConfirmationDTO.customerEmail(),
                 customerName,

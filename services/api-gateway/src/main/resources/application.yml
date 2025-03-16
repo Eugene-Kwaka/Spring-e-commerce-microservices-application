@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:configserver:http://localhost:8888
+  security:
+    # Indicates you're configuring OAuth2 authentication, which is an industry-standard protocol for authorization.
+    oauth2:
+      # Specifies that you're configuring a resource server, which is a server that hosts protected resources and requires valid tokens to access those resources.
+      resourceserver:
+        # Specifies that you're configuring JWT (JSON Web Token) authentication, which is a compact and self-contained way of representing claims to be transferred between two parties.
+        jwt:
+          # Specifies the URI of the issuer of the JWT tokens.
+          # The issuer is the entity that issued the token and is typically a trusted authority.
+          # The uri points to the Keycloak server that issues the tokens.
+          # 9098 is the port of the Keycloak server.
+          # realms/micro-services is the path to the realm in Keycloak that issues the tokens.
+          issuer-uri: "http://localhost:9098/realms/ecommerce-microservices"
+

@@ -1,0 +1,127 @@
+services:
+#  # Container for postgresqlDB service
+#  postgres:
+#    container_name: ms_pg_sql
+#    image: postgres
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: root
+#      PGDATA: /var/lib/postgresql/data
+#    # Persistent data storage with the postgres volume
+#    volumes:
+#      - postgres:/var/lib/postgresql/data
+#    ports:
+#      # Exposing container ports "External Port: Container Port"
+#      - 5432:5432
+#    # Custom network
+#    networks:
+#      - microservices-net
+#    # If the container is stopped, I want it to automatically restart
+#    restart: unless-stopped
+#
+#
+#  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+#  pgadmin:
+#    container_name: ms_pgadmin
+#    image: dpage/pgadmin4
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+#      PGADMIN_CONFIG_SERVER_MODE: 'False'
+#    volumes:
+#      - pgadmin:/var/lib/pgadmin
+#    ports:
+#      - 5050:80
+#    networks:
+#      - microservices-net
+#    restart: unless-stopped
+
+
+
+  # KAFKA CONFIG USING ZOOKEEPER
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      # This config is only required when working with this container in dev mode. When deploying, more configuration is required.
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      - microservices-net
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: ms_kafka
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      # How many replications do I want
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+    networks:
+      - microservices-net
+
+
+
+  # MongoDB service container
+  mongodb:
+    container_name: ms_mongo_db
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=eugene
+      - MONGO_INITDB_ROOT_PASSWORD=eugene
+
+
+  # MongoExpress service container
+  mongo-express:
+    container_name: ms_mongo_express
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+
+
+  # mail-dev service container
+  mail-dev:
+    container_name: ms_mail_dev
+    image: maildev/maildev
+    ports:
+      # Web interface on port 1025
+      - 1080:1080
+      # SMTP server on port 1025
+      - 1025:1025
+
+
+
+
+
+# Creates a bridge network named "microservices-net" for container communication
+networks:
+  microservices-net:
+    driver: bridge
+
+# Three persistent volumes are defined:
+# postgres: For PostgresSQL data
+# pgadmin: For pgAdmin configurations
+# mongo: For MongoDB data
+volumes:
+  postgres:
+  pgadmin:
+  mongo:

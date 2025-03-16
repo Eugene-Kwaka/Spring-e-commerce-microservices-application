@@ -5,6 +5,7 @@ import com.eugene.order_service.clients.PaymentClient;
 import com.eugene.order_service.clients.ProductClient;
 import com.eugene.order_service.dto.*;
 import com.eugene.order_service.entity.Order;
+import com.eugene.order_service.entity.OrderLine;
 import com.eugene.order_service.exceptions.BusinessException;
 import com.eugene.order_service.kafka.OrderConfirmationDTO;
 import com.eugene.order_service.kafka.OrderProducer;
@@ -12,6 +13,7 @@ import com.eugene.order_service.mapper.OrderMapper;
 import com.eugene.order_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -35,24 +37,24 @@ public class OrderService {
 
 
 
-
+    @Transactional
     public Integer createOrder(OrderDTO orderDTO){
 
         /**
          * Check for the customer from the customer-service using OpenFeign.
          * This will make a direct call to the customer-service and try to get a customer by their Id.
          * */
-        CustomerDTO customer = customerClient.getCustomerById(orderDTO.customerId())
+        var customer = this.customerClient.getCustomerById(orderDTO.customerId())
                 .orElseThrow(() -> new BusinessException("Cannot create order: Customer not found"));
 
         /**
          * Purchase the products by calling the purchaseProducts() endpoint from product-service using OpenFeign.
          * Return a list of the purchasedProductsResponse
          */
-        List<ProductPurchaseResponseDTO> purchasedProductsResponseDTO = productClient.purchaseProducts(orderDTO.productPurchasesDTO());
+        var purchasedProductsResponseDTO = productClient.purchaseProducts(orderDTO.productPurchasesDTO());
 
         // save the order in the DB
-        Order order = orderRepository.save(orderMapper.toOrder(orderDTO));
+        Order order = this.orderRepository.save(orderMapper.toOrder(orderDTO));
 
         /**
          * Persist the orderLines.
@@ -61,10 +63,10 @@ public class OrderService {
         for (ProductPurchaseDTO productPurchaseDTO: orderDTO.productPurchasesDTO()) {
             orderLineService.saveOrderLine(
                     new OrderLineDTO(
-                            null,
-                            order,
-                            productPurchaseDTO.productId(),
-                            productPurchaseDTO.quantity()
+                            null,                           // OrderLine ID should be null for new entries
+                            order.getId(),                  // Order ID reference
+                            productPurchaseDTO.productId(), // Product ID
+                            productPurchaseDTO.quantity()   // Quantity
                     ));
         }
 
@@ -76,7 +78,7 @@ public class OrderService {
          *  - order.getId() - This retrieves the id from the Order entity.
          *  - order.getReference() - This retrieves the reference from the Order entity.
          *  - customer - This is the Customer object retrieved from the CustomerClient.*/
-        PaymentRequestDTO paymentRequestDTO = new PaymentRequestDTO(
+        var paymentRequestDTO = new PaymentRequestDTO(
                 orderDTO.amount(),
                 orderDTO.paymentMethod(),
                 order.getId(),
@@ -92,6 +94,7 @@ public class OrderService {
                         orderDTO.reference(),
                         orderDTO.amount(),
                         orderDTO.paymentMethod(),
+                        // From the customer object retrieved at the start of the method.
                         customer,
                         purchasedProductsResponseDTO
                 )
@@ -102,7 +105,7 @@ public class OrderService {
 
     public List<OrderResponseDTO> findAllOrders(){
 
-        return orderRepository.findAll()
+        return this.orderRepository.findAll()
                 .stream()
                 .map(orderMapper::toOrderDTO)
                 .toList();
@@ -110,10 +113,18 @@ public class OrderService {
     }
 
     public OrderResponseDTO findOrderById(Integer id){
-        Order order = orderRepository.findById(id)
+        Order order = this.orderRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("No order found with the provided ID " + id));
 
         return orderMapper.toOrderDTO(order);
+    }
+
+    public void deleteOrder(Integer id) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("No order found with the provided ID " + id));
+
+        this.orderRepository.deleteById(order.getId());
     }
 
 }

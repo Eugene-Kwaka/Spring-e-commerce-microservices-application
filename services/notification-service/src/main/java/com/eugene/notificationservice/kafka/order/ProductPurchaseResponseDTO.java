@@ -2,8 +2,8 @@ package com.eugene.notificationservice.kafka.order;
 
 import java.math.BigDecimal;
 
-public record ProductDTO(
-
+// Renamed from ProductDTO to ProductPurchaseResponseDTO to match order-service
+public record ProductPurchaseResponseDTO(
         Integer productId,
 
         String name,

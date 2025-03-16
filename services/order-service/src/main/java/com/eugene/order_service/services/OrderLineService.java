@@ -19,19 +19,15 @@ public class OrderLineService {
     private final OrderLineMapper orderLineMapper;
 
     public Integer saveOrderLine(OrderLineDTO orderLineDTO) {
-        var Order = orderLineMapper.toOrderLine(orderLineDTO);
-        return orderLineRepo.save(Order).getId();
+        var order = orderLineMapper.toOrderLine(orderLineDTO);
+        return orderLineRepo.save(order).getId();
     }
 
-    public List<OrderLineResponseDTO> findAllByOrderId(Integer id) {
-        return orderLineRepo.findAll().stream()
+    public List<OrderLineResponseDTO> findAllByOrderId(Integer orderId) {
+        return orderLineRepo.findAllByOrderId(orderId)
+                .stream()
                 .map(orderLineMapper::toOrderLineResponseDTO)
                 .toList();
     }
 
-    public OrderLineResponseDTO findByOrderId(Integer id){
-        return orderLineRepo.findById(id)
-                .map(orderLineMapper::toOrderLineResponseDTO)
-                .orElseThrow(() -> new BusinessException("OrderLine not found"));
-    }
 }

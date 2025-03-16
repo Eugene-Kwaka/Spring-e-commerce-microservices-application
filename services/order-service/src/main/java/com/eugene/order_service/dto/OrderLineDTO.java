@@ -6,7 +6,7 @@ public record OrderLineDTO(
 
         Integer id,
 
-        Order order,
+        Integer orderId,
 
         Integer productId,
 

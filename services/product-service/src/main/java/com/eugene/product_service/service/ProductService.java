@@ -4,6 +4,7 @@ package com.eugene.product_service.service;
 import com.eugene.product_service.dto.ProductDTO;
 import com.eugene.product_service.dto.ProductPurchaseDTO;
 import com.eugene.product_service.dto.ProductPurchaseResponseDTO;
+import com.eugene.product_service.dto.ProductResponseDTO;
 import com.eugene.product_service.entity.Product;
 import com.eugene.product_service.exception.ProductPurchaseException;
 import com.eugene.product_service.mapper.ProductMapper;
@@ -28,13 +29,13 @@ public class ProductService {
     private ProductMapper productMapper;
 
 
-    public ProductDTO createProduct(ProductDTO productDTO) {
+    public ProductResponseDTO createProduct(ProductDTO productDTO) {
 
         Product product = productMapper.toProduct(productDTO);
 
         Product newProduct = productRepository.save(product);
 
-        return productMapper.toProductDTO(newProduct);
+        return productMapper.toProductResponseDTO(newProduct);
     }
 
 
@@ -109,16 +110,16 @@ public class ProductService {
 
 
 
-    public ProductDTO findProductById(Integer id){
+    public ProductResponseDTO findProductById(Integer id){
 
         Product product = productRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Product not found with ID:: " + id));
 
-        return productMapper.toProductDTO(product);
+        return productMapper.toProductResponseDTO(product);
     }
 
-    public List<ProductDTO> findAllProducts() {
+    public List<ProductResponseDTO> findAllProducts() {
         List<Product> products = productRepository.findAll();
 
-        return products.stream().map(productMapper::toProductDTO).toList();
+        return products.stream().map(productMapper::toProductResponseDTO).toList();
     }
 }

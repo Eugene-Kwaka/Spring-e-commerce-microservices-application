@@ -19,7 +19,6 @@ public record ProductDTO(
         @NotNull(message = "Product description is required")
         String description,
 
-
         // @Positive ensures only positive numbers are used
         @Positive(message = "Available quantity should be positive")
         double availableQuantity,
@@ -28,6 +27,6 @@ public record ProductDTO(
         BigDecimal price,
 
         @NotNull(message = "Product category is required")
-        Category category
+        Integer categoryId
 ) {
 }

@@ -9,26 +9,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderLineMapper {
 
-    public OrderLine toOrderLine(OrderLineDTO orderLineDTO){
-        if(orderLineDTO == null){
+    public OrderLine toOrderLine(OrderLineDTO orderLineDTO) {
+        if(orderLineDTO == null) {
             return null;
         }
 
         return OrderLine.builder()
-                .id(orderLineDTO.id())
-                // We are getting the order itself that has been saved in the DB after the products have been purchased.
+                .id(orderLineDTO.id())  // Changed from orderLineDTO.orderId()
+                .productId(orderLineDTO.productId())
                 .order(
                         Order.builder()
-                                .id(orderLineDTO.id())
+                                .id(orderLineDTO.orderId())
                                 .build()
                 )
-                .productId(orderLineDTO.productId())
                 .quantity(orderLineDTO.quantity())
                 .build();
     }
 
     public OrderLineResponseDTO toOrderLineResponseDTO(OrderLine orderLine) {
-        if(orderLine == null){
+        if(orderLine == null) {
             return null;
         }
 

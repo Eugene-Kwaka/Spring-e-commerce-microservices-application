@@ -24,15 +24,17 @@ public class CustomerService {
     private CustomerMapper customerMapper;
 
 
-    public String createCustomer(CustomerDTO customerDTO){
+    public CustomerDTO createCustomer(CustomerDTO customerDTO){
         // Take the customerDTO object provided and change it to a Customer Document(Entity class) using the customerMapper's toCustomer() method
         Customer customer = customerMapper.toCustomer(customerDTO);
 
         // Save the newCustomer in the database using the customerRepository.save() method
         Customer newCustomer = customerRepository.save(customer);
 
-        // Return the newCustomer's id once saved
-        return newCustomer.getId();
+//        // Return the newCustomer's id once saved
+//        return newCustomer.getId();
+
+        return customerMapper.toCustomerDTO(newCustomer);
     }
 
     public CustomerDTO updateCustomer(String id, CustomerDTO customerDTO){

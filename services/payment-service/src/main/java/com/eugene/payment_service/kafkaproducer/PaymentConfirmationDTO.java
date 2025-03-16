@@ -4,7 +4,7 @@ import com.eugene.payment_service.entity.PaymentMethod;
 
 import java.math.BigDecimal;
 
-public record PaymentNotificationRequestDTO(
+public record PaymentConfirmationDTO(
 
         String orderReference,
 

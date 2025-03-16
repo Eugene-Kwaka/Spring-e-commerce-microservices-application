@@ -33,6 +33,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(unique = true,  nullable = false)
     private String reference;
 
     private BigDecimal totalAmount;
@@ -57,10 +58,8 @@ public class Order {
      * This shows that the Order entity can have many OrderLine entities associated with it.
      * The mappedBy="order" indicates that the OrderLine entity has a field named order that owns the relationship.
      * */
-    @OneToMany(mappedBy="order")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderLine> orderLines;
-
-    private List<ProductPurchaseDTO> productPurchasesDTO;
 
     /**
      * Automatically populates the annotated field with the timestamp of when the entity was first created.
