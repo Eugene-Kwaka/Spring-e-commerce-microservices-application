@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+// import java.util.Optional;
+// import java.util.stream.Collectors;
 
-import static java.lang.String.format;
+// import static java.lang.String.format;
 
 @Service
 public class CustomerService {
@@ -31,8 +31,8 @@ public class CustomerService {
         // Save the newCustomer in the database using the customerRepository.save() method
         Customer newCustomer = customerRepository.save(customer);
 
-//        // Return the newCustomer's id once saved
-//        return newCustomer.getId();
+        // Return the newCustomer's id once saved
+        // return newCustomer.getId();
 
         return customerMapper.toCustomerDTO(newCustomer);
     }

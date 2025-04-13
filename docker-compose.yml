@@ -15,7 +15,7 @@ services:
 #      - 5432:5432
 #    # Custom network
 #    networks:
-#      - microservices-net
+#      - ecommercemicroservices-net
 #    # If the container is stopped, I want it to automatically restart
 #    restart: unless-stopped
 #
@@ -33,25 +33,25 @@ services:
 #    ports:
 #      - 5050:80
 #    networks:
-#      - microservices-net
+#      - ecommercemicroservices-net
 #    restart: unless-stopped
 
 
 
   # Zipkin service container for distributed tracing.
   zipkin:
-    container_name: ms_zipkin
+    container_name: ecommerce_zipkin
     image: openzipkin/zipkin
     ports:
       - 9411:9411
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
   # KAFKA CONFIG USING ZOOKEEPER
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper
+    container_name: ecommerce_zookeeper
     environment:
       # This config is only required when working with this container in dev mode. When deploying, more configuration is required.
       ZOOKEEPER_SERVER_ID: 1
@@ -60,12 +60,12 @@ services:
     ports:
       - 22181:2181
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:latest
-    container_name: ms_kafka
+    container_name: ecommerce_kafka
     ports:
       - 9092:9092
     depends_on:
@@ -79,28 +79,28 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
 
   # MongoDB service container
   mongodb:
-    container_name: ms_mongo_db
+    container_name: ecommerce_mongodb
     image: mongo
     ports:
       - 27017:27017
     volumes:
-      - mongo:/data
+      - ecommerce_mongodb:/data
     environment:
       - MONGO_INITDB_ROOT_USERNAME=eugene
       - MONGO_INITDB_ROOT_PASSWORD=eugene
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
   # MongoExpress service container
   mongo-express:
-    container_name: ms_mongo_express
+    container_name: ecommerce_mongo_express
     image: mongo-express
     ports:
       - 8081:8081
@@ -109,12 +109,12 @@ services:
       - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
       - ME_CONFIG_MONGODB_SERVER=mongodb
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
   # mail-dev service container
   mail-dev:
-    container_name: ms_mail_dev
+    container_name: ecommerce_mail_dev
     image: maildev/maildev
     ports:
       # Web interface on port 1025
@@ -122,20 +122,22 @@ services:
       # SMTP server on port 1025
       - 1025:1025
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     restart: unless-stopped
 
 
   keycloak:
-    container_name: keycloak-ms
+    container_name: ecommerce_keycloak
     image: quay.io/keycloak/keycloak:24.0.2
     ports:
       - 9098:8080
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ecommerce_keycloak:/opt/keycloak/data # Mount the volume to the Keycloak data directory
     networks:
-      - microservices-net
+      - ecommercemicroservices-net
     command:
       - "start-dev"
     restart: unless-stopped
@@ -144,7 +146,7 @@ services:
 
 # Creates a bridge network named "microservices-net" for container communication
 networks:
-  microservices-net:
+  ecommercemicroservices-net:
     driver: bridge
 
 # Three persistent volumes are defined:
@@ -152,6 +154,7 @@ networks:
 # pgadmin: For pgAdmin configurations
 # mongo: For MongoDB data
 volumes:
-  postgres:
-  pgadmin:
-  mongo:
+  # postgres:
+  # pgadmin:
+  ecommerce_mongodb:
+  ecommerce_keycloak:
