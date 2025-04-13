@@ -455,7 +455,7 @@
 
 
 
-			````
+			```java
 				  @Service
 				  public class CustomerMapper{
 
@@ -464,7 +464,7 @@
 						if(customerDTO == null){
 							return null;
 						}
-						
+
 						return Customer.builder()
 							.id(customerDTO.id())
 							.firstName(customerDTO.firstName())
@@ -472,7 +472,7 @@
 							.email(customerDTO.email())
 							.address(customerDTO.address())
 							.build();
-					
+
 					}
 
 
@@ -481,18 +481,16 @@
 						if(customer == null){
 							return null;
 						}
-						
+
 						return CustomerDTO
 							.id(customer.getId())
 							.firstName(customer.getFirstName())
 							.lastName(customer.getLastName())
 							.email(customer.getEmail())
 							.address(customer.getAddress())
-					
+
 				      }
 				  }
-
-			````
 
 		
 ##### Exception Handling:
