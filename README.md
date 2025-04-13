@@ -548,15 +548,16 @@
 
 				- This class is responsible for:
 
-					- central exception handling by providing application-wide exception handling.
+					-> central exception handling by providing application-wide exception handling.
 
-					- Removes the need for try-catch blocks at every controller method.
+					-> Removes the need for try-catch blocks at every controller method.
 
-					- Handles the CustomerNotFoundException by returning a 404 status code when customer is not found.
+					-> Handles the CustomerNotFoundException by returning a 404 status code when customer is not found.
 
-					- Handles the MethodArgumentNotValidException from the @Valid annotation I will be using in my Controller class when an invalid CustomerDTO object is passed as a RequestBody parameter in the   controller methods.
+					-> Handles the MethodArgumentNotValidException from the @Valid annotation I will be using in my Controller class when an invalid CustomerDTO object
+					   is passed as a RequestBody parameter in the controller methods.
 
-					- Handles the ConstraintViolationException for constraints like @NotNull, @NotBlank, @Email and returns field-specific error messages.
+					-> Handles the ConstraintViolationException for constraints like @NotNull, @NotBlank, @Email and returns field-specific error messages.
 
 
 				> @RestControllerAdvice
@@ -606,42 +607,41 @@
 
 						var errors = new HashMap<String, String>();
 
-						// Gets the set of constraint violations from the exception
-						// Loops through each violation using ForEach() loop.
+						// Get the constraint violations from the exception and loop through each violation using the forEach() loop
 						e.getConstraintViolations().forEach(violation -> 
 						
-							/* For each violation:
-							 * violation.getPropertyPath(): Gets the path to the invalid property.
-                             * toString(): Converts the path to a string.
-                             * violation.getMessage(): Gets the validation error message.
-                             * errors.put(): Adds the path and message to the HashMap.
-                             * */
+							// getPropertyPath().toString() gets the path to the invalid property and converts it to a String.
+							// violation.getMessage() gets the validation error message.
+							// errors.put() adds the fieldName and the message to the HashMap.
 							errors.put(violation.getPropertyPath().toString(), violation.getMessage())
-						);
+						)
+
 
 						return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CustomerResponseError(errors));
 					
 					}
+	
+
 				}
 
 
 
 
-##### CustomerService class for the logic.
+		CustomerService class for the logic.
 
 			- After handling the exceptions that will be thrown in the application, let's configure the business logic.
 
 			- In this class I will have multiple methods:
 
-				- createCustomer(CustomerDTO customerDTO);
+				-> createCustomer(CustomerDTO customerDTO);
 
-				- updateCustomer(CustomerDTO customerDTO)
+				-> updateCustomer(CustomerDTO customerDTO)
 
-				- findAll() for finding all customers
+				-> findAll()
 		
-				- getCustomerById(String id)
+				-> getCustomerById(String id)
 
-				- deleteCustomer(String id)
+				-> deleteCustomer(String id)
 
 
 			> @Service
