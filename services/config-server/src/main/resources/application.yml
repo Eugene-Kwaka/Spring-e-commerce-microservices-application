@@ -5,9 +5,9 @@ spring:
     name:
       config-server
   cloud:
-    config:
-      server:
-        native:
+    config: # config settings for Spring Cloud Config
+      server: # Configures the Config Server itself
+        native: # Specifies that the Config Server should use the local filesystem (or classpath) to load configuration files.
           # The classpath is in the /resources/configurations folder in the config-server project.
           search-locations: classpath:/configurations
 

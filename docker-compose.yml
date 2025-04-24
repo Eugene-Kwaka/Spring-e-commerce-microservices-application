@@ -1,7 +1,7 @@
 services:
 #  # Container for postgresqlDB service
 #  postgres:
-#    container_name: ms_pg_sql
+#    container_name: ecommerce_pg_sql
 #    image: postgres
 #    environment:
 #      POSTGRES_USER: postgres
@@ -9,7 +9,7 @@ services:
 #      PGDATA: /var/lib/postgresql/data
 #    # Persistent data storage with the postgres volume
 #    volumes:
-#      - postgres:/var/lib/postgresql/data
+#      - ecommerce_pg_sql:/var/lib/postgresql/data
 #    ports:
 #      # Exposing container ports "External Port: Container Port"
 #      - 5432:5432
@@ -22,14 +22,14 @@ services:
 #
 #  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
 #  pgadmin:
-#    container_name: ms_pgadmin
+#    container_name: ecommerce_pgadmin
 #    image: dpage/pgadmin4
 #    environment:
 #      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
 #      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
 #      PGADMIN_CONFIG_SERVER_MODE: 'False'
 #    volumes:
-#      - pgadmin:/var/lib/pgadmin
+#      - ecommerce_pgadmin:/var/lib/pgadmin
 #    ports:
 #      - 5050:80
 #    networks:

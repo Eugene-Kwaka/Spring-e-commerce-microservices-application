@@ -40,29 +40,33 @@ public class ProductService {
 
 
     /**
-     * Take a list of productPurchaseDTOs*/
+     * Take a list of productPurchaseDTOs
+     * */
     public List<ProductPurchaseResponseDTO> purchaseProducts(List<ProductPurchaseDTO> productPurchaseDTO) {
 
         // Extract the productId from each productPurchaseDTO(products I am purchasing )in the list and collect them into a list called productIds
         List<Integer> productIds = productPurchaseDTO.stream().map(ProductPurchaseDTO::productId).toList();
 
-        // Find all products stored in the DB available for purchase
+        // Find all products stored in the DB available for purchase in order of their ids, matching the productIds parameter passed in
         List<Product> storedProducts = productRepository.findAllByIdInOrderById(productIds);
 
         /**
-         * Check if the number of products I want to buy using the productsIds is same to the number of storedProducts in the DB
-         * If not, return a ProductPurchaseException */
+         * Check if the number of products I want to buy using their productsIds is same to the number of storedProducts in the DB.
+         * If the sizes differ, it means one or more products in the purchase request are not available in the database, returning a ProductPurchaseException.
+         */
         if(productIds.size() != storedProducts.size()) {
             throw new ProductPurchaseException("One or more products are not available for purchase");
         }
 
-        // Creates a list of products user wants to purchase and sorts them based on their productIds
+        /** 
+         * Creates a list of products user wants to purchase and sorts them based on their productIds.
+         * This simplifies the matching of purchase requests with stored products.
+         */
         List<ProductPurchaseDTO> purchaseProducts = productPurchaseDTO.stream().sorted(Comparator.comparing(ProductPurchaseDTO::productId)).toList();
 
         // Create an empty list of purchasedProducts that will be filled with the products the user buys.
         List<ProductPurchaseResponseDTO> purchasedProducts = new ArrayList<>();
-
-
+        
         /**
          * Filters through the storedProducts in DB and returns storedProducts whose ID matches the purchaseProduct ID that the user wants to buy.
          * If the storedProduct ID does not match the purchaseProduct ID, an exception is thrown that the purchaseProduct is not found.
@@ -117,9 +121,11 @@ public class ProductService {
         return productMapper.toProductResponseDTO(product);
     }
 
+
     public List<ProductResponseDTO> findAllProducts() {
         List<Product> products = productRepository.findAll();
 
         return products.stream().map(productMapper::toProductResponseDTO).toList();
     }
+
 }

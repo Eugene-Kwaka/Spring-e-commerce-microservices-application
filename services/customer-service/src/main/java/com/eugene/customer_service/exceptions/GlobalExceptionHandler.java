@@ -12,15 +12,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-/* Central Exception Handling component that provides application-wide exception handling
-* Removes the need for the try-catch blocks in the Controller class.
-* Handles the CustomerNotFoundException by return a 404 HttpStatus code (NOT FOUND)
-* Handles the MethodArgumentNotValidException from @Valid annotations in the CustomerController and then returns structured responses.
-* Handles ConstraintsViolationException like @NotNull, @NotBlank @Email and returns each field-specific error message.*/
+/**
+ * Central Exception Handling component that provides application-wide exception handling
+ * Removes the need for the try-catch blocks in the Controller class.
+ * Handles the CustomerNotFoundException by return a 404 HttpStatus code (NOT FOUND)
+ * Handles the MethodArgumentNotValidException from @Valid annotations in the CustomerController and then returns structured responses.
+ * Handles ConstraintsViolationException like @NotNull, @NotBlank @Email and returns each field-specific error message.
+ * */
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomerNotFoundException.class)
     public ResponseEntity<String> handleCustomerNotFoundException(CustomerNotFoundException e){
+        
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMsg());
 
     }

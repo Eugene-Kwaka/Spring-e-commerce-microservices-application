@@ -1,7 +1,7 @@
 package com.eugene.product_service.mapper;
 
 import com.eugene.product_service.dto.ProductDTO;
-import com.eugene.product_service.dto.ProductPurchaseDTO;
+// import com.eugene.product_service.dto.ProductPurchaseDTO;
 import com.eugene.product_service.dto.ProductPurchaseResponseDTO;
 import com.eugene.product_service.dto.ProductResponseDTO;
 import com.eugene.product_service.entity.Category;
@@ -11,10 +11,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductMapper {
 
+    // Converts a product entity from the DB to a productResponseDTO  which is what is shown to the client
     public ProductResponseDTO toProductResponseDTO(Product product) {
+
         if (product == null){
             return null;
         }
+
+        // Since the ProductResponseDTO is a record, I won't be using the Builder class.
         return new ProductResponseDTO(
                 product.getId(),
                 product.getName(),
@@ -28,7 +32,10 @@ public class ProductMapper {
 
     }
 
+
+    // Converting the ProductDTO record to a Product entity class
     public Product toProduct(ProductDTO productDTO) {
+
         if (productDTO == null){
             return null;
         }
@@ -39,12 +46,12 @@ public class ProductMapper {
                 .description(productDTO.description())
                 .availableQuantity(productDTO.availableQuantity())
                 .price(productDTO.price())
-                /**
-                 * We are getting the category itself that has been saved in the DB
+                 /**
+                 * We are getting the category itself that has been saved in the DB.
                  * We're using the builder pattern for Category because we need to create a reference to an existing category without loading all its data.
                  *  - When creating/updating a product, the  ProductDTO only contains the categoryId (not the full category details)
-                 * - We need to associate the product with its category in the database
-                 * - In JPA/Hibernate, we only need the ID to establish this relationship - we don't need to load the entire category object
+                 *  - We need to associate the product with its category in the database
+                 *  - In JPA/Hibernate, we only need the ID to establish this relationship, we don't need to load the entire category object
                  * Using the builder() pattern for category creates a lightweight reference to the category object with just the ID.
                  * When JPA saves the product, it will use this ID to create the foreign key relationship in the database.
                  */
@@ -58,6 +65,8 @@ public class ProductMapper {
     }
 
 
+
+    
     public ProductPurchaseResponseDTO toProductPurchaseResponse(Product product, double quantity){
 
         if(product == null){

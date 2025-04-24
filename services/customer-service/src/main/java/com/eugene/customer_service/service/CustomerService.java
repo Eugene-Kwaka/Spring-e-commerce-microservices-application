@@ -30,10 +30,11 @@ public class CustomerService {
 
         // Save the newCustomer in the database using the customerRepository.save() method
         Customer newCustomer = customerRepository.save(customer);
-
+ 
         // Return the newCustomer's id once saved
         // return newCustomer.getId();
 
+        // Convert the newCustomer entity saved in the DB to DTO and return it.
         return customerMapper.toCustomerDTO(newCustomer);
     }
 
@@ -58,8 +59,10 @@ public class CustomerService {
             customer.setAddress(customerDTO.address());
         }
 
+        // Save the updatedCustomer in the DB
         Customer updatedCustomer = customerRepository.save(customer);
 
+        // Convert the updatedCustomer to a DTO and return it
         return customerMapper.toCustomerDTO(updatedCustomer);
 
     }

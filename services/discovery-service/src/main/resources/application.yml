@@ -1,17 +1,17 @@
 spring:
   application:
-    name: discover-service
+    name: discover-service # Specify the name of the Service_Discovery application
   config:
-    import: optional:configserver:http://localhost:8888
-
+    import: optional:configserver:http://localhost:8888 # The 'optional' tells us if we cannot access the config-server on port 8888, try to start it again without it so that the app does not fail.
+ 
 eureka:
   instance:
-    hostname: localhost
+    hostname: localhost # hostname of the Discovery_Service application.
   client:
-    registerWithEureka: false
-    fetchRegistry: false
-    serviceUrl:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+    registerWithEureka: false # As a Eureka server, the Discovery_Service app should not register with Eureka.
+    fetchRegistry: false # As a Eureka registry server, The app will not fetch the registry of other services from Eureka.
+    serviceUrl: 
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/ # Defines the URL where the Eureka server is located. It uses the hostname and port defined earlier.
 
 server:
-  port: 8761
+  port: 8761 # Eureka's port number. Once I run the Discovery_Service app, I can access its UI with the URL "http://localhost:8761/eureka/"# Eureka's port number. Once I run the Service_Discovery app, I can access its UI with the URL "http://localhost:8761/eureka/"

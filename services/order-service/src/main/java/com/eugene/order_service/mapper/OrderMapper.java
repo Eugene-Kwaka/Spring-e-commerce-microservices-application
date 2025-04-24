@@ -2,7 +2,7 @@ package com.eugene.order_service.mapper;
 
 import com.eugene.order_service.dto.OrderDTO;
 import com.eugene.order_service.dto.OrderResponseDTO;
-import com.eugene.order_service.dto.ProductPurchaseResponseDTO;
+// import com.eugene.order_service.dto.ProductPurchaseResponseDTO;
 import com.eugene.order_service.entity.Order;
 import org.springframework.stereotype.Service;
 

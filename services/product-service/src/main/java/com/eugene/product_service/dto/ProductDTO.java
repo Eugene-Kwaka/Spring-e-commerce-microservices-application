@@ -1,10 +1,10 @@
 package com.eugene.product_service.dto;
 
-import com.eugene.product_service.entity.Category;
+// import com.eugene.product_service.entity.Category;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
+// import lombok.NoArgsConstructor;
+// import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 

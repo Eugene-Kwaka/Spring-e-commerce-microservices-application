@@ -17,7 +17,7 @@ public class OrderLine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne // One order can have multiple orderlines (e.g one fior each product in the order.)
     @JoinColumn(name="order_id")
     private Order order;
 

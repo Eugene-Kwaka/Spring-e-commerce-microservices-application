@@ -1,6 +1,6 @@
 package com.eugene.order_service.entity;
 
-import com.eugene.order_service.dto.ProductPurchaseDTO;
+// import com.eugene.order_service.dto.ProductPurchaseDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

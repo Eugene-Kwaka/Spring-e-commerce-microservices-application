@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
-@Validated
+@Validated  // Enables validation at controller level
 public class CustomerController {
 
     @Autowired

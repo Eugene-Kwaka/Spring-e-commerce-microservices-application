@@ -17,6 +17,7 @@ public class OrderLineMapper {
         return OrderLine.builder()
                 .id(orderLineDTO.id())  // Changed from orderLineDTO.orderId()
                 .productId(orderLineDTO.productId())
+                // Using the Builder class in this case as we only need the order's id from the Order class. 
                 .order(
                         Order.builder()
                                 .id(orderLineDTO.orderId())

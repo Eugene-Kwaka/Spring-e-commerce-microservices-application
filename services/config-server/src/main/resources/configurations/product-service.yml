@@ -10,16 +10,16 @@ spring:
   jpa:
     hibernate:
       # Validate because fly-way will create the schema for us
-      ddl-auto: validate
+      ddl-auto: update
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-  #FLYWAY Configuration
-  flyway:
-    url: jdbc:postgresql://localhost:5432/ecommerceProductService
-    baseline-on-migrate: true
-    enabled: true
-    baseline-description: "init"
-    baseline-version: 0
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
+  # #FLYWAY Configuration
+  # flyway:
+  #   url: jdbc:postgresql://localhost:5432/ecommerceProductService
+  #   baseline-on-migrate: true
+  #   enabled: true
+  #   baseline-description: "init"
+  #   baseline-version: 0
+  #   user: ${spring.datasource.username}
+  #   password: ${spring.datasource.password}
