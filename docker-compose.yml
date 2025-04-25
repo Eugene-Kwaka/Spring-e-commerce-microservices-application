@@ -1,42 +1,39 @@
 services:
-#  # Container for postgresqlDB service
-#  postgres:
-#    container_name: ecommerce_pg_sql
-#    image: postgres
-#    environment:
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: root
-#      PGDATA: /var/lib/postgresql/data
-#    # Persistent data storage with the postgres volume
-#    volumes:
-#      - ecommerce_pg_sql:/var/lib/postgresql/data
-#    ports:
-#      # Exposing container ports "External Port: Container Port"
-#      - 5432:5432
-#    # Custom network
-#    networks:
-#      - ecommercemicroservices-net
-#    # If the container is stopped, I want it to automatically restart
-#    restart: unless-stopped
-#
-#
-#  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
-#  pgadmin:
-#    container_name: ecommerce_pgadmin
-#    image: dpage/pgadmin4
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
-#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-#      PGADMIN_CONFIG_SERVER_MODE: 'False'
-#    volumes:
-#      - ecommerce_pgadmin:/var/lib/pgadmin
-#    ports:
-#      - 5050:80
-#    networks:
-#      - ecommercemicroservices-net
-#    restart: unless-stopped
+  # Container for postgresqlDB service
+  postgres:
+    container_name: ecommerce_pg_sql
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PGDATA: /var/lib/postgresql/data
+    # Persistent data storage with the postgres volume
+    volumes:
+      - ecommerce_pg_sql:/var/lib/postgresql/data
+    ports:
+      # Exposing container ports "External Port: Container Port"
+      - 5433:5432
+    # Custom network
+    networks:
+      - ecommercemicroservices-net
+    # If the container is stopped, I want it to automatically restart
+    restart: unless-stopped
 
-
+  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+  pgadmin:
+    container_name: ecommerce_pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - ecommerce_pgadmin:/var/lib/pgadmin
+    ports:
+      - 5200:80
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
 
   # Zipkin service container for distributed tracing.
   zipkin:
@@ -82,7 +79,6 @@ services:
       - ecommercemicroservices-net
     restart: unless-stopped
 
-
   # MongoDB service container
   mongodb:
     container_name: ecommerce_mongodb
@@ -125,7 +121,6 @@ services:
       - ecommercemicroservices-net
     restart: unless-stopped
 
-
   keycloak:
     container_name: ecommerce_keycloak
     image: quay.io/keycloak/keycloak:24.0.2
@@ -142,8 +137,6 @@ services:
       - "start-dev"
     restart: unless-stopped
 
-
-
 # Creates a bridge network named "microservices-net" for container communication
 networks:
   ecommercemicroservices-net:
@@ -156,5 +149,7 @@ networks:
 volumes:
   # postgres:
   # pgadmin:
+  ecommerce_pg_sql:
+  ecommerce_pgadmin:
   ecommerce_mongodb:
   ecommerce_keycloak:
