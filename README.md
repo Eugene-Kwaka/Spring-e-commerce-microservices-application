@@ -1490,12 +1490,480 @@ Securing our E-commerce application with Spring Security KeyCloak
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-DOCKERIZING THE MICROSERVICES
+## DOCKERIZING THE MICROSERVICES
 
-	-
+	- To Dockerize the application:
 
+		- I added the Postgres and PgAdmin configs in the docker-compose.yml file. These are different from the other Postgres and PgAdmin containers from mydbnetwork that carry all my databases.
+
+			services:
+				# Container for postgresqlDB service
+				postgres:
+					container_name: ecommerce_pg_sql
+					image: postgres
+					environment:
+						POSTGRES_USER: postgres
+						POSTGRES_PASSWORD: root
+						PGDATA: /var/lib/postgresql/data
+					# Persistent data storage with the postgres volume
+					volumes:
+						- ecommerce_pg_sql:/var/lib/postgresql/data
+					ports:
+						# Exposing container ports "External Port: Container Port"
+						- 5433:5432
+					# Custom network
+					networks:
+						- ecommercemicroservices-net
+					# If the container is stopped, I want it to automatically restart
+					restart: unless-stopped
+
+				# This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+				pgadmin:
+					container_name: ecommerce_pgadmin
+					image: dpage/pgadmin4
+					environment:
+						PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+						PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+						PGADMIN_CONFIG_SERVER_MODE: 'False'
+					volumes:
+						- ecommerce_pgadmin:/var/lib/pgadmin
+					ports:
+						- 5200:80
+					networks:
+						- ecommercemicroservices-net
+					restart: unless-stopped
 	
+		- I want to use Spring profiles, where I use a Docker profile for the app. When I run the application in Docker, its configuration and dependencies wpuld be accessed from the Docker profile.
+
+			- I achieved this by creating a docker.yml file for each configuration file. For example, the 'api-gateway.yml' file has its own 'api-gateway-docker.yml' file, with Docker specific properties where necessary.
+
+			- In the ConfigServer app, I created an 'application-docker.yml' file that specifies the location that the config server would search for the docker configurations folder for all the Dockerized services.
+
+				> config-server/src/main/resources/application-docker.yml
+
+				spring:
+					profiles:
+						active: native
+					application:
+						name:
+							config-server
+					cloud:
+						config: # config settings for Spring Cloud Config
+							server: # Configures the Config Server itself
+								native: # Specifies that the Config Server should use the local filesystem (or classpath) to load configuration files.
+									# The classpath is in the /resources/docker_configurations folder in the config-server project to allow the Docker containers to access the configurations.
+									search-locations: classpath:/docker_configurations
+
+				server:
+					port: 8888
 			
+			- I will also create a application-docker.yml file for all the application.yml files in each individual service. Replace any 'localhost' with the name of the docker service as specified in the docker-compose.yml file.
+
+			- For example, the api-gateway's application-docker.yml would look like;
+
+				> api-gateway/src/main/resources/application-docker.yml
+
+				spring:
+					application:
+						name: api-gateway
+					config:
+						import: optional:configserver:http://config-server:8888
+					security:
+						# Indicates you're configuring OAuth2 authentication, which is an industry-standard protocol for authorization.
+						oauth2:
+							# Specifies that you're configuring a resource server, which is a server that hosts protected resources and requires valid tokens to access those resources.
+							resourceserver:
+								# Specifies that you're configuring JWT (JSON Web Token) authentication, which is a compact and self-contained way of representing claims to be transferred between two parties.
+								jwt:
+									# Specifies the URI of the issuer of the JWT tokens.
+									# The issuer is the entity that issued the token and is typically a trusted authority.
+									# The uri points to the Keycloak server that issues the tokens.
+									# 9098 is the port of the Keycloak server.
+									# realms/microservices is the path to the realm in Keycloak that issues the tokens.
+									issuer-uri: "http://keycloak:9098/realms/ecommerce-microservices"
+
+#### Building Images of my services
+
+	- Firstly before running the docker-compose.yml file, I need to create images of all my services, then write them in the docker-compose.yml file so that it creates running containers for all the services defined in it.
+
+	- We will be using Maven's Buildpacks to create these images, which is simpler and easier than handling dockerfiles.
+
+	- To use create the images, first we need to make all Maven wrapper scripts (mvnw) executable in your project. The executable scripts will enable us to run the maven commands necessary to create the images.
+
+		- To this write the command
+
+			> find . -name mvnw -exec chmod +x {} \;
+
+		- I faced an error in my terminal that said that maven was not found. I had to install maven in my machine then configure the maven:wrapper to work.
+
+			> sudo apt install maven
+
+			> mvn wrapper:wrapper
+
+
+		- I found out that each service requires me to install the mvn wrapper before I could execute the mvnw command to create an image. So I decided to create a script that would install the maven files for all services. The file is called 'setup-maven-wrappers.sh'
+
+		#!/bin/bash
+
+		# List of service directories
+		services=(
+			"services/config-server"
+			"services/discovery-service"
+			"services/api-gateway"
+			"services/customer-service"
+			"services/product-service"
+			"services/order-service"
+			"services/payment-service"
+			"services/notification-service"
+		)
+
+		# Setup Maven wrapper for each service
+		for service in "${services[@]}"; do
+			echo "Setting up Maven wrapper for $service"
+			cd "$service" || continue
+
+			# Create directory structure
+			mkdir -p .mvn/wrapper
+
+			# Create properties file
+			echo "distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.6/apache-maven-3.8.6-bin.zip" > .mvn/wrapper/maven-wrapper.properties
+
+			# Download wrapper JAR and scripts
+			curl -o .mvn/wrapper/maven-wrapper.jar https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar
+			curl -o mvnw https://raw.githubusercontent.com/takari/maven-wrapper/master/mvnw
+			curl -o mvnw.cmd https://raw.githubusercontent.com/takari/maven-wrapper/master/mvnw.cmd
+
+			# Make wrapper executable
+			chmod +x mvnw
+
+			cd - || exit
+		done
+
+		echo "Maven wrappers set up for all services"
+
+
+		- To run the script, navigate to the project's root directory then make the wrapper executable and run it
+
+			> chmod +x setup-maven-wrappers.sh
+
+			> ./setup-maven-wrappers.sh
+
+
+	- To successfully build images of each service, navigate to each of the services' directory and write the following command:
+
+			> cd services/api-gateway
+
+			> ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=eugenekwaka/ecommerce_api-gateway:v1
+
+	- Then I will push my images to Dockerhub, which is a public repository for all images created by myself and others.
+
+		- I would first need to login to Dockerhub:
+
+			> docker login # Enter my Dockerhub credentials
+
+		- Then to push the images, I run
+
+			> docker push eugenekwaka/ecommerce_config-server:v1
+
+
+	- After pushing my images to dockerhub, I will update my docker-compose.yml specifying the additional services I want built to images. This is the final version of the docker-compose.yml file:
+
+		services:
+			# Container for postgresqlDB service
+			postgres:
+				container_name: ecommerce_pg_sql
+				image: postgres
+				environment:
+					POSTGRES_USER: postgres
+					POSTGRES_PASSWORD: root
+					PGDATA: /var/lib/postgresql/data
+				# Persistent data storage with the postgres volume
+				volumes:
+					- ecommerce_pg_sql:/var/lib/postgresql/data
+				ports:
+					# Exposing container ports "External Port: Container Port"
+					- 5433:5432
+				# Custom network
+				networks:
+					- ecommercemicroservices-net
+				# If the container is stopped, I want it to automatically restart
+				restart: unless-stopped
+
+			# This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+			pgadmin:
+				container_name: ecommerce_pgadmin
+				image: dpage/pgadmin4
+				environment:
+					PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+					PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+					PGADMIN_CONFIG_SERVER_MODE: 'False'
+				volumes:
+					- ecommerce_pgadmin:/var/lib/pgadmin
+				ports:
+					- 5200:80
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Zipkin service container for distributed tracing.
+			zipkin:
+				container_name: ecommerce_zipkin
+				image: openzipkin/zipkin
+				ports:
+					- 9411:9411
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# KAFKA CONFIG USING ZOOKEEPER
+			zookeeper:
+				image: confluentinc/cp-zookeeper:latest
+				container_name: ecommerce_zookeeper
+				environment:
+					# This config is only required when working with this container in dev mode. When deploying, more configuration is required.
+					ZOOKEEPER_SERVER_ID: 1
+					ZOOKEEPER_CLIENT_PORT: 2181
+					ZOOKEEPER_TICK_TIME: 2000
+				ports:
+					- 22181:2181
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			kafka:
+				image: confluentinc/cp-kafka:latest
+				container_name: ecommerce_kafka
+				ports:
+					- 9092:9092
+				depends_on:
+					- zookeeper
+				environment:
+					# How many replications do I want
+					KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+					KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+					KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+					KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+					KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+					KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# MongoDB service container
+			mongodb:
+				container_name: ecommerce_mongodb
+				image: mongo
+				ports:
+					- 27017:27017
+				volumes:
+					- ecommerce_mongodb:/data
+				environment:
+					- MONGO_INITDB_ROOT_USERNAME=eugene
+					- MONGO_INITDB_ROOT_PASSWORD=eugene
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# MongoExpress service container
+			mongo-express:
+				container_name: ecommerce_mongo_express
+				image: mongo-express
+				ports:
+					- 8081:8081
+				environment:
+					- ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
+					- ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
+					- ME_CONFIG_MONGODB_SERVER=mongodb
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# mail-dev service container
+			mail-dev:
+				container_name: ecommerce_mail_dev
+				image: maildev/maildev
+				ports:
+					# Web interface on port 1025
+					- 1080:1080
+					# SMTP server on port 1025
+					- 1025:1025
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			keycloak:
+				container_name: ecommerce_keycloak
+				image: quay.io/keycloak/keycloak:24.0.2
+				ports:
+					- 9098:8080
+				environment:
+					KEYCLOAK_ADMIN: admin
+					KEYCLOAK_ADMIN_PASSWORD: admin
+				volumes:
+					- ecommerce_keycloak:/opt/keycloak/data # Mount the volume to the Keycloak data directory
+				networks:
+					- ecommercemicroservices-net
+				command:
+					- "start-dev"
+				restart: unless-stopped
+
+			# Config Server service container
+			config-server:
+				container_name: ecommerce_config_server
+				image: eugenekwaka/ecommerce_config-server:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: native
+				ports:
+					- 8888:8888
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Discovery Server service container
+			discovery-service:
+				container_name: ecommerce_discovery-service
+				image: eugenekwaka/ecommerce_discovery-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+				depends_on:
+					- config-server
+				ports:
+					- 8761:8761
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# API Gateway service container
+			api-gateway:
+				container_name: ecommerce_api-gateway
+				image: eugenekwaka/ecommerce_api-gateway:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+				ports:
+					- 8222:8222
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Customer Service service container
+			customer-service:
+				container_name: ecommerce_customer-service
+				image: eugenekwaka/ecommerce_customer-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+					- mongodb
+				ports:
+					- 8090:8090
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Product Service service container
+			product-service:
+				container_name: ecommerce_product-service
+				image: eugenekwaka/ecommerce_product-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+					- postgres
+				ports:
+					- 8050:8050
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Order Service service container
+			order-service:
+				container_name: ecommerce_order-service
+				image: eugenekwaka/ecommerce_order-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+					- kafka
+					- postgres
+				ports:
+					- 8060:8060
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Payment Service service container
+			payment-service:
+				container_name: ecommerce_payment-service
+				image: eugenekwaka/ecommerce_payment-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+					- kafka
+					- postgres
+				ports:
+					- 8070:8070
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Notification Service service container
+			notification-service:
+				container_name: ecommerce_notification-service
+				image: eugenekwaka/ecommerce_notification-service:v1
+				environment:
+					SPRING_PROFILES_ACTIVE: docker
+					SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+				depends_on:
+					- config-server
+					- discovery-service
+					- kafka
+					- mongodb
+					- mail-dev
+				ports:
+					- 8080:8080
+				networks:
+					- ecommercemicroservices-net
+				restart: unless-stopped
+
+			# Creates a bridge network named "microservices-net" for container communication
+				networks:
+						ecommercemicroservices-net:
+						driver: bridge
+
+			# Three persistent volumes are defined:
+			volumes:
+				ecommerce_pg_sql:
+				ecommerce_pgadmin:
+				ecommerce_mongodb:
+				ecommerce_keycloak:
+
+
+
+	- Since I already used some of the containers when running my project locally (e.g., mongodb, mongo-express, zipkin, kafka, zookeeper, mail-dev, and keycloak), I would stop the containers and then use the --build flag to only rebuild the images for the services while starting containers for the services that are not yet created. Existing containers won't be removed.
+
+		> docker compose stop  # stops all running containers defined in the docker-compose.yml file
+
+		> docker compose up --rebuild  #rebuild the images for services defined in your docker-compose.yml file and start any containers that are not already running.
+
+
+
+
+
+
+
 		
 
 

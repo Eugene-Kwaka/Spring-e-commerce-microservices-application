@@ -1,12 +1,13 @@
 spring:
   application:
-    name: discover-service # Specify the name of the Service_Discovery application
+    name: discovery-service # Specify the name of the Service_Discovery application
   config:
-    import: optional:configserver:http://localhost:8888 # The 'optional' tells us if we cannot access the config-server on port 8888, try to start it again without it so that the app does not fail.
+    import: optional:configserver:http://config-server:8888 # The 'optional' tells us if we cannot access the config-server on port 8888, try to start it again without it so that the app does not fail.
  
 eureka:
   instance:
-    hostname: localhost # hostname of the Discovery_Service application.
+    hostname: discovery-service # hostname of the dockerized Discovery_Service application.
+    prefer-ip-address: true # This property tells Eureka to register services using their IP addresses instead of their hostnames.
   client:
     registerWithEureka: false # As a Eureka server, the Discovery_Service app should not register with Eureka.
     fetchRegistry: false # As a Eureka registry server, The app will not fetch the registry of other services from Eureka.
@@ -15,3 +16,11 @@ eureka:
 
 server:
   port: 8761 # Eureka's port number. Once I run the Discovery_Service app, I can access its UI with the URL "http://localhost:8761/eureka/"# Eureka's port number. Once I run the Service_Discovery app, I can access its UI with the URL "http://localhost:8761/eureka/"
+
+
+# Health check settings for the Discovery Service
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

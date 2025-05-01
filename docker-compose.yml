@@ -1,4 +1,5 @@
 services:
+  # Infrastructure Services
   # Container for postgresqlDB service
   postgres:
     container_name: ecommerce_pg_sql
@@ -7,19 +8,120 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       PGDATA: /var/lib/postgresql/data
-    # Persistent data storage with the postgres volume
     volumes:
       - ecommerce_pg_sql:/var/lib/postgresql/data
     ports:
-      # Exposing container ports "External Port: Container Port"
-      - 5433:5432
-    # Custom network
+      - "5433:5432"
     networks:
       - ecommercemicroservices-net
-    # If the container is stopped, I want it to automatically restart
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # MongoDB service container
+  mongodb:
+    container_name: ecommerce_mongodb
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ecommerce_mongodb:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=eugene
+      - MONGO_INITDB_ROOT_PASSWORD=eugene
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 10s
+
+  # KAFKA CONFIG USING ZOOKEEPER
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: ecommerce_zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 10s
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: ecommerce_kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:29092 --list"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 30s
+
+  # Support Services
+
+  # mail-dev service container
+  mail-dev:
+    container_name: ecommerce_mail_dev
+    image: maildev/maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    networks:
+      - ecommercemicroservices-net
     restart: unless-stopped
 
-  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+  # Zipkin service container for distributed tracing
+  zipkin:
+    container_name: ecommerce_zipkin
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9411/health"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#      start_period: 15s
+
+  # Admin UIs
+
+  # pgAdmin interface microservice
   pgadmin:
     container_name: ecommerce_pgadmin
     image: dpage/pgadmin4
@@ -30,76 +132,20 @@ services:
     volumes:
       - ecommerce_pgadmin:/var/lib/pgadmin
     ports:
-      - 5200:80
+      - "5200:80"
     networks:
       - ecommercemicroservices-net
     restart: unless-stopped
-
-  # Zipkin service container for distributed tracing.
-  zipkin:
-    container_name: ecommerce_zipkin
-    image: openzipkin/zipkin
-    ports:
-      - 9411:9411
-    networks:
-      - ecommercemicroservices-net
-    restart: unless-stopped
-
-  # KAFKA CONFIG USING ZOOKEEPER
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: ecommerce_zookeeper
-    environment:
-      # This config is only required when working with this container in dev mode. When deploying, more configuration is required.
-      ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - 22181:2181
-    networks:
-      - ecommercemicroservices-net
-    restart: unless-stopped
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: ecommerce_kafka
-    ports:
-      - 9092:9092
     depends_on:
-      - zookeeper
-    environment:
-      # How many replications do I want
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-    networks:
-      - ecommercemicroservices-net
-    restart: unless-stopped
-
-  # MongoDB service container
-  mongodb:
-    container_name: ecommerce_mongodb
-    image: mongo
-    ports:
-      - 27017:27017
-    volumes:
-      - ecommerce_mongodb:/data
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=eugene
-      - MONGO_INITDB_ROOT_PASSWORD=eugene
-    networks:
-      - ecommercemicroservices-net
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
 
   # MongoExpress service container
   mongo-express:
     container_name: ecommerce_mongo_express
     image: mongo-express
     ports:
-      - 8081:8081
+      - "8081:8081"
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
       - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
@@ -107,34 +153,229 @@ services:
     networks:
       - ecommercemicroservices-net
     restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_started
 
-  # mail-dev service container
-  mail-dev:
-    container_name: ecommerce_mail_dev
-    image: maildev/maildev
-    ports:
-      # Web interface on port 1025
-      - 1080:1080
-      # SMTP server on port 1025
-      - 1025:1025
-    networks:
-      - ecommercemicroservices-net
-    restart: unless-stopped
-
+  # Authentication service
   keycloak:
     container_name: ecommerce_keycloak
     image: quay.io/keycloak/keycloak:24.0.2
     ports:
-      - 9098:8080
+      - "9098:8080"
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     volumes:
-      - ecommerce_keycloak:/opt/keycloak/data # Mount the volume to the Keycloak data directory
+      - ecommerce_keycloak:/opt/keycloak/data
     networks:
       - ecommercemicroservices-net
     command:
       - "start-dev"
+    restart: unless-stopped
+
+  # Core Microservices Infrastructure
+
+  # Config Server container
+  config-server:
+    container_name: ecommerce_config-server
+    image: eugenekwaka/ecommerce_config-server:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+    ports:
+      - "8888:8888"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 30
+#      start_period: 100s
+
+  # Discovery Server container
+  discovery-service:
+    container_name: ecommerce_discovery-service
+    image: eugenekwaka/ecommerce_discovery-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+    ports:
+      - "8761:8761"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 30
+#      start_period: 100s
+
+  # API Gateway service container
+  api-gateway:
+    container_name: ecommerce_api-gateway
+    image: eugenekwaka/ecommerce_api-gateway:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+    ports:
+      - "8222:8222"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+
+  # Business Microservices
+
+  # Customer Service container
+  customer-service:
+    container_name: ecommerce_customer-service
+    image: eugenekwaka/ecommerce_customer-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      mongodb:
+        condition: service_started
+    ports:
+      - "8090:8090"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+
+  # Product Service container
+  product-service:
+    container_name: ecommerce_product-service
+    image: eugenekwaka/ecommerce_product-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8050:8050"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+
+  # Order Service container
+  order-service:
+    container_name: ecommerce_order-service
+    image: eugenekwaka/ecommerce_order-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8060:8060"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+
+  # Payment Service container
+  payment-service:
+    container_name: ecommerce_payment-service
+    image: eugenekwaka/ecommerce_payment-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8070:8070"
+    networks:
+      - ecommercemicroservices-net
+    restart: unless-stopped
+
+  # Notification Service container
+  notification-service:
+    container_name: ecommerce_notification-service
+    image: eugenekwaka/ecommerce_notification-service:v1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      # Add retry capability for config server connection
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 20
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      kafka:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      mail-dev:
+        condition: service_started
+    ports:
+      - "8040:8040"
+    networks:
+      - ecommercemicroservices-net
     restart: unless-stopped
 
 # Creates a bridge network named "microservices-net" for container communication
@@ -142,14 +383,311 @@ networks:
   ecommercemicroservices-net:
     driver: bridge
 
-# Three persistent volumes are defined:
-# postgres: For PostgresSQL data
-# pgadmin: For pgAdmin configurations
-# mongo: For MongoDB data
+# Four persistent volumes are defined:
 volumes:
-  # postgres:
-  # pgadmin:
   ecommerce_pg_sql:
   ecommerce_pgadmin:
   ecommerce_mongodb:
   ecommerce_keycloak:
+
+
+#services:
+#  # Container for postgresqlDB service
+#  postgres:
+#    container_name: ecommerce_pg_sql
+#    image: postgres
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: root
+#      PGDATA: /var/lib/postgresql/data
+#    # Persistent data storage with the postgres volume
+#    volumes:
+#      - ecommerce_pg_sql:/var/lib/postgresql/data
+#    ports:
+#      # Exposing container ports "External Port: Container Port"
+#      - "5433:5432"
+#    # Custom network
+#    networks:
+#      - ecommercemicroservices-net
+#    # If the container is stopped, I want it to automatically restart
+#    restart: unless-stopped
+#
+#  # This container is for the pgAdmin interface microservice - For users who do  not have access to the Intellij Ultimate version
+#  pgadmin:
+#    container_name: ecommerce_pgadmin
+#    image: dpage/pgadmin4
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
+#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+#      PGADMIN_CONFIG_SERVER_MODE: 'False'
+#    volumes:
+#      - ecommerce_pgadmin:/var/lib/pgadmin
+#    ports:
+#      - "5200:80"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Zipkin service container for distributed tracing.
+#  zipkin:
+#    container_name: ecommerce_zipkin
+#    image: openzipkin/zipkin
+#    ports:
+#      - "9411:9411"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # KAFKA CONFIG USING ZOOKEEPER
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:latest
+#    container_name: ecommerce_zookeeper
+#    environment:
+#      # This config is only required when working with this container in dev mode. When deploying, more configuration is required.
+#      ZOOKEEPER_SERVER_ID: 1
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    ports:
+#      - "22181:2181"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  kafka:
+#    image: confluentinc/cp-kafka:latest
+#    container_name: ecommerce_kafka
+#    ports:
+#      - "9092:9092"
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      # How many replications do I want
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#      # Updated configuration to support both Docker and local access
+#      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+#      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # MongoDB service container
+#  mongodb:
+#    container_name: ecommerce_mongodb
+#    image: mongo
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - ecommerce_mongodb:/data
+#    environment:
+#      - MONGO_INITDB_ROOT_USERNAME=eugene
+#      - MONGO_INITDB_ROOT_PASSWORD=eugene
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # MongoExpress service container
+#  mongo-express:
+#    container_name: ecommerce_mongo_express
+#    image: mongo-express
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      - ME_CONFIG_MONGODB_ADMINUSERNAME=eugene
+#      - ME_CONFIG_MONGODB_ADMINPASSWORD=eugene
+#      - ME_CONFIG_MONGODB_SERVER=mongodb
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # mail-dev service container
+#  mail-dev:
+#    container_name: ecommerce_mail_dev
+#    image: maildev/maildev
+#    ports:
+#      # Web interface on port 1025
+#      - "1080:1080"
+#      # SMTP server on port 1025
+#      - "1025:1025"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  keycloak:
+#    container_name: ecommerce_keycloak
+#    image: quay.io/keycloak/keycloak:24.0.2
+#    ports:
+#      - "9098:8080"
+#    environment:
+#      KEYCLOAK_ADMIN: admin
+#      KEYCLOAK_ADMIN_PASSWORD: admin
+#    volumes:
+#      - ecommerce_keycloak:/opt/keycloak/data # Mount the volume to the Keycloak data directory
+#    networks:
+#      - ecommercemicroservices-net
+#    command:
+#      - "start-dev"
+#    restart: unless-stopped
+#
+#  # Config Server container
+#  config-server:
+#    container_name: ecommerce_config_server
+#    image: eugenekwaka/ecommerce_config-server:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: native
+#    ports:
+#      - "8888:8888"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#    healthcheck:
+#      # Using wget instead of curl (more likely to be available)
+#      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1" ]
+#      # Slower initial check and more retries
+#      interval: 10s
+#      timeout: 5s
+#      retries: 10
+#      # Allow more time before first health check
+#      start_period: 40s
+#
+#  # Discovery Server container
+#  discovery-service:
+#    container_name: ecommerce_discovery-service
+#    image: eugenekwaka/ecommerce_discovery-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#    depends_on:
+#      - config-server
+#    ports:
+#       - "8761:8761"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#    healthcheck:
+#      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 10
+#      start_period: 40s
+#
+#
+#  # API Gateway service container
+#  api-gateway:
+#    container_name: ecommerce_api-gateway
+#    image: eugenekwaka/ecommerce_api-gateway:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#    ports:
+#      - "8222:8222"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Customer Service container
+#  customer-service:
+#    container_name: ecommerce_customer-service
+#    image: eugenekwaka/ecommerce_customer-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#      - mongodb
+#    ports:
+#      - "8090:8090"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Product Service container
+#  product-service:
+#    container_name: ecommerce_product-service
+#    image: eugenekwaka/ecommerce_product-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#      - postgres
+#    ports:
+#      - "8050:8050"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Order Service container
+#  order-service:
+#    container_name: ecommerce_order-service
+#    image: eugenekwaka/ecommerce_order-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#      - kafka
+#      - postgres
+#    ports:
+#      - "8060:8060"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Payment Service container
+#  payment-service:
+#    container_name: ecommerce_payment-service
+#    image: eugenekwaka/ecommerce_payment-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#      - kafka
+#      - postgres
+#    ports:
+#      - "8070:8070"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+#  # Notification Service container
+#  notification-service:
+#    container_name: ecommerce_notification-service
+#    image: eugenekwaka/ecommerce_notification-service:v1
+#    environment:
+#      SPRING_PROFILES_ACTIVE: docker
+#      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+#    depends_on:
+#      - config-server
+#      - discovery-service
+#      - kafka
+#      - mongodb
+#      - mail-dev
+#    ports:
+#      - "8040:8040"
+#    networks:
+#      - ecommercemicroservices-net
+#    restart: unless-stopped
+#
+## Creates a bridge network named "microservices-net" for container communication
+#networks:
+#  ecommercemicroservices-net:
+#    driver: bridge
+#
+## Three persistent volumes are defined:
+#volumes:
+#  ecommerce_pg_sql:
+#  ecommerce_pgadmin:
+#  ecommerce_mongodb:
+#  ecommerce_keycloak:
