@@ -1,0 +1,22 @@
+spring:
+  profiles:
+    active: native #native profile tells the config server to look for the configurations in the local filesystem or classpath
+  application:
+    name: config-server
+  cloud:
+    config: # config settings for Spring Cloud Config
+      server: # Configures the Config Server itself
+        native: # Specifies that the Config Server should use the local filesystem (or classpath) to load configuration files.
+          # The classpath is in the /resources/docker_configurations folder in the config-server project to allow the Docker containers to access the configurations.
+          search-locations: classpath:/docker_configurations
+
+server:
+  port: 8888
+
+
+# Health check settings for the Config Server
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

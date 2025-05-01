@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: configserver:http://config-server:8888
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://keycloak:9098/realms/ecommerce-microservices"
+
+
+
+
+

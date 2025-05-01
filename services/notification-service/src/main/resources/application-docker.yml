@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: notification-service
+
+  mail:
+    host: mail-dev # Use the container name of the mail service as defined in the docker-compose.yml file
+    port: 1025
+#    username: eugene
+#    password: eugene
+    properties:
+      #mail.smtp.auth: true
+      mail.smtp.auth: false
+      #mail.smtp.starttls.enable: true
+      mail.smtp.starttls.enable: false
+      mail.smtp.trust: "*"
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 3000
+      mail.smtp.writetimeout: 5000
+
+  config:
+    import: configserver:http://config-server:8888
+
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/

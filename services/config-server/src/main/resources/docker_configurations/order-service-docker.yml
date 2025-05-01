@@ -1,0 +1,59 @@
+server:
+  port: 8060
+
+spring:
+  application:
+    name: order-service
+
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgres:5432/ecommerceOrderService
+    username: postgres
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+
+
+  # KAFKA Configuration for Serialization of Kafka messages from the order-service for the consumer
+  kafka:
+    producer:
+      # Tells the producer where to connect to your Kafka cluster.
+      # “kafka:29092” is the typical address for a docker-container running Kafka instance.
+      bootstrap-servers: kafka:29092
+      # Specifies the class used to serialize the message key.
+      # Because it’s set to StringSerializer, any key you provide for your messages will be turned into a string when sent to Kafka.
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Specifies the class used to serialize the message value.
+      # Here, you’re using Spring’s JsonSerializer so the message payload(OrderConfirmationDTO object) will be converted to JSON before being sent to Kafka.
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        # The producer needs to inform the consumer what kind of topic we are sending. In this case we are sending an object called orderConfirmationDTO.
+        # We need to provide the source of the object (package name and class name) so that it can be accepted.
+        # This property tells the serializer that whenever it encounters the orderConfirmationDTO type identifier (often provided in headers or metadata), it should treat the payload as an instance of com.eugene.order_service.kafka.OrderConfirmationDTO.
+        # It allows seamless JSON (de)serialization by mapping this short name or alias (orderConfirmationDTO) to the fully qualified class name, ensuring that the consumer side can also deserialize it correctly if it has the same mapping setup.
+        spring.json.type.mapping: orderConfirmationDTO:com.eugene.order_service.kafka.OrderConfirmationDTO
+
+
+# Configuration for Order Service to connect to Customer Service, Product Service and Payment Service.
+application:
+  config:
+    # We are using the port 8222 for the API Gateway that will route and filter all requests and forward them to the correct microservice
+    customer-serviceURL: http://api-gateway:8222/api/v1/customers
+    product-serviceURL: http://api-gateway:8222/api/v1/products
+    payment-serviceURL: http://api-gateway:8222/api/v1/payments
+
+#    # Using load balancing using openfeign to reach the microservices instead of using the API Gateway.
+#    customer-serviceURL: http://localhost:8090/api/v1/customers
+#    product-serviceURL: http://localhost:8050/api/v1/products
+#    payment-serviceURL: http://localhost:8060/api/v1/payments

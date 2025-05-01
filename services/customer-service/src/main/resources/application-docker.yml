@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: customer-service
+  config:
+    import: configserver:http://config-server:8888 # The service fetches configuration from the config server that is at the port 8888
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/

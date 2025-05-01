@@ -1,0 +1,23 @@
+eureka:
+  instance:
+    hostname: discovery-service
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka
+
+
+
+# This configuration prevents system properties from automatically overriding service-specific configurations. We do not want that to happen.
+# This ensures that each service's specific configurations (defined in their respective YAML files) are respected and not unexpectedly overridden
+spring:
+  cloud:
+    config:
+      override.system-properties: false
+
+
+# ZIPKIN properties
+management:
+  tracing:
+    sampling:
+      # Probability of 1.0 means 100% of the requests will be traced.
+      probability: 1.0

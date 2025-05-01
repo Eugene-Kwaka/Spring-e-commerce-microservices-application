@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: customer-service
+
+  data:
+    mongodb:
+      username: eugene
+      password: eugene
+      host: mongodb # Changing the host to the container name of the MongoDB service as defined in the docker-compose.yml.
+      port: 27017
+      database: customer-service
+      authentication-database: admin
+
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/
+
+server:
+  port: 8090

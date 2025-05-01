@@ -1,0 +1,58 @@
+server:
+  port: 8222
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    discovery:
+      client:
+        service-url:
+          defaultZone: http://discovery-service:8761/eureka/
+
+    gateway:
+      # I want the gateway to discover the services from Eureka.
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true  # Allow lowercase service IDs in URLs
+
+      # The routes for each microservice. The lb shows the microservices should be load balanced.
+      routes:
+        - id: customer-service
+          # In uppercase letters based on how it is registered in Eureka. In case we have many instances of the same service, it will load balance between them.
+          uri: lb://CUSTOMER-SERVICE
+          predicates:
+            - Path=/api/v1/customers/**
+
+        - id: product-service
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/v1/products/**
+
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/orders/**
+          #            - Path=/api/v1/order-lines/**
+
+          # Requests going to the order-lines are redirected to the order-service
+        - id: order-lines-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/order-lines/**
+
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/v1/payments/**
+
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/v1/notifications/**
+
+
+
+
