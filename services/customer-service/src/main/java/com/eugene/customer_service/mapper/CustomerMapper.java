@@ -1,12 +1,18 @@
 package com.eugene.customer_service.mapper;
 
+import com.eugene.customer_service.customer.Address;
 import com.eugene.customer_service.customer.Customer;
+import com.eugene.customer_service.dto.AddressDTO;
 import com.eugene.customer_service.dto.CustomerDTO;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CustomerMapper {
 
+    /**
+     * Converts CustomerDTO to Customer entity.
+     * Uses builder pattern for Customer entity as it's a mutable class with many fields.
+     */
     public Customer toCustomer(CustomerDTO customerDTO){
 
         if (customerDTO == null){
@@ -18,30 +24,62 @@ public class CustomerMapper {
                 .firstName(customerDTO.firstName())
                 .lastName(customerDTO.lastName())
                 .email(customerDTO.email())
-                .address(customerDTO.address())
+                // Ensures that the addressDTO field is converted to address field
+                .address(toAddress(customerDTO.address()))
                 .build();
     }
 
+     /**
+     * Converts Customer entity to CustomerDTO.
+     * Uses canonical constructor for CustomerDTO as it's a record (immutable data carrier).
+     * Records are designed for simple, transparent data transfer and don't need builders.
+     */
     public CustomerDTO toCustomerDTO(Customer customer){
 
         if (customer == null){
             return null;
         }
 
-        /** 
-         * I won't use the Builder() class because CustomerDTO is a record and not a normal class.
-         * Why Not Use Builder for CustomerDTO?
-                - Records are designed to be simple, immutable data carriers
-                - Records automatically generate a canonical constructor
-                - Records provide a clean, concise way to create instances
-                - Adding Builder pattern to records would add unnecessary complexity
-         * */ 
         return new CustomerDTO(
                 customer.getId(),
                 customer.getFirstName(),
                 customer.getLastName(),
                 customer.getEmail(),
-                customer.getAddress()
+                // Ensures that the address field is converted to addressDTO field
+                toAddressDTO(customer.getAddress())
+        );
+    }
+
+    /**
+     * Converts AddressDTO to Address entity.
+     * Required because CustomerDTO uses AddressDTO (record) while Customer entity uses Address (class).
+     * This conversion maintains proper separation between API layer (DTOs) and persistence layer (entities).
+     */
+    public Address toAddress(AddressDTO addressDTO) {
+        if (addressDTO == null) {
+            return null;
+        }
+        return Address.builder()
+                .street(addressDTO.street())
+                .houseNumber(addressDTO.houseNumber())
+                .zipCode(addressDTO.zipCode())
+                .build();
+    }
+
+
+    /**
+     * Converts Address entity to AddressDTO.
+     * Required to prevent exposing internal entity details to the API layer.
+     * This conversion ensures clean separation of concerns between layers.
+     */
+    public AddressDTO toAddressDTO(Address address) {
+        if (address == null) {
+            return null;
+        }
+        return new AddressDTO(
+                address.getStreet(),
+                address.getHouseNumber(),
+                address.getZipCode()
         );
     }
 }

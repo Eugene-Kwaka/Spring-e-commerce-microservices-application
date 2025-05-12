@@ -56,7 +56,8 @@ public class CustomerService {
         }
 
         if (customerDTO.address() != null) {
-            customer.setAddress(customerDTO.address());
+            // Converts the AddressDTO to an Address entity which is then set to the updatedCustomer as an Address field.
+            customer.setAddress(customerMapper.toAddress(customerDTO.address()));
         }
 
         // Save the updatedCustomer in the DB

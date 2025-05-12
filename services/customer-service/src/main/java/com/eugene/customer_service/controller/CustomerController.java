@@ -14,7 +14,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
-@Validated  // Enables validation at controller level
+/**
+ * Enables validation at controller level
+ * When placed at the class level, it ensures that all method parameters are validated:
+ * - RequestBody parameters
+ * - @RequestParam parameters
+ * - @PathVariable parameters
+ * - Method parameters
+ */
+@Validated
 public class CustomerController {
 
     @Autowired
