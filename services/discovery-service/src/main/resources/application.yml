@@ -6,7 +6,7 @@ spring:
  
 eureka:
   instance:
-    hostname: discovery-service # hostname of the dockerized Discovery_Service application.
+    hostname: localhost # hostname should be 'localhost' when running locally.
     prefer-ip-address: true # This property tells Eureka to register services using their IP addresses instead of their hostnames.
   client:
     registerWithEureka: false # As a Eureka server, the Discovery_Service app should not register with Eureka.
